@@ -33,7 +33,7 @@ class ProjectMetricStoryOverall
       end
     end
     trans_time_valid = transition_times.select {|tt| tt > 24*3600 }
-    @raw_data = {score: trans_time_valid.length * 4.0 / transition_times.length }
+    @raw_data = { score: (trans_time_valid.length * 4.0 / transition_times.length).round(1) }
   end
 
   def raw_data=(new)
