@@ -1,6 +1,7 @@
 require "project_metric_story_overall/version"
 require "faraday"
 require "json"
+require "time"
 
 class ProjectMetricStoryOverall
   attr_reader :raw_data
@@ -10,26 +11,29 @@ class ProjectMetricStoryOverall
     @conn = Faraday.new(url: 'https://www.pivotaltracker.com/services/v5')
     @conn.headers['Content-Type'] = 'application/json'
     @conn.headers['X-TrackerToken'] = credentials[:token]
+
     @raw_data = raw_data
   end
 
   def image
     refresh unless @raw_data
-    { chartType: 'd3',
-      titleText: 'Story Lifecycle',
+    { chartType: 'gauge',
+      titleText: 'Story Management GPA',
       data: @raw_data }.to_json
   end
 
   def refresh
-    @raw_data = {transitions: [], stories: []}
+    transition_times = []
     stories.each do |s|
-      trans = transitions s['id']
-      unless trans.empty?
-        @raw_data[:transitions] << trans
-        @raw_data[:stories] << s
+      previous_time = nil
+      transitions(s['id']).each do |trans|
+        tmp_trans_time = Time.parse trans['occurred_at']
+        transition_times.push(tmp_trans_time - previous_time) if previous_time
+        previous_time = tmp_trans_time
       end
     end
-    @raw_data[:transitions] = @raw_data[:transitions].flatten
+    trans_time_valid = transition_times.select {|tt| tt > 24*3600 }
+    @raw_data = {score: trans_time_valid.length * 4.0 / transition_times.length }
   end
 
   def raw_data=(new)
@@ -41,6 +45,10 @@ class ProjectMetricStoryOverall
   def score
     refresh unless @raw_data
     @score = @raw_data.length
+  end
+
+  def self.credentials
+    %I[project token]
   end
 
   private
