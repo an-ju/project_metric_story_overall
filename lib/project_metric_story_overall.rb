@@ -7,10 +7,10 @@ class ProjectMetricStoryOverall
   attr_reader :raw_data
 
   def initialize(credentials, raw_data = nil)
-    @project = credentials[:project]
+    @project = credentials[:tracker_project]
     @conn = Faraday.new(url: 'https://www.pivotaltracker.com/services/v5')
     @conn.headers['Content-Type'] = 'application/json'
-    @conn.headers['X-TrackerToken'] = credentials[:token]
+    @conn.headers['X-TrackerToken'] = credentials[:tracker_token]
 
     @raw_data = raw_data
   end
@@ -48,7 +48,7 @@ class ProjectMetricStoryOverall
   end
 
   def self.credentials
-    %I[project token]
+    %I[tracker_project tracker_token]
   end
 
   private
