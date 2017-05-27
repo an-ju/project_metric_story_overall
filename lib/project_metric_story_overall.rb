@@ -15,25 +15,9 @@ class ProjectMetricStoryOverall
     @raw_data = raw_data
   end
 
-  def image
-    refresh unless @raw_data
-    { chartType: 'gauge',
-      titleText: 'Story Management GPA',
-      data: @raw_data }.to_json
-  end
-
   def refresh
-    transition_times = []
-    stories.each do |s|
-      previous_time = nil
-      transitions(s['id']).each do |trans|
-        tmp_trans_time = Time.parse trans['occurred_at']
-        transition_times.push(tmp_trans_time - previous_time) if previous_time
-        previous_time = tmp_trans_time
-      end
-    end
-    trans_time_valid = transition_times.select {|tt| tt > 24*3600 }
-    @raw_data = { score: (trans_time_valid.length * 4.0 / transition_times.length).round(1) }
+    @raw_data ||= stories
+    @image = @score = nil
   end
 
   def raw_data=(new)
@@ -43,8 +27,17 @@ class ProjectMetricStoryOverall
   end
 
   def score
-    refresh unless @raw_data
-    @score = @raw_data.length
+    @raw_data ||= stories
+    synthesize
+    @score ||= @user_points.values.inject { |s, e| s + e } / @user_points.length.to_f
+  end
+
+  def image
+    @raw_data ||= stories
+    synthesize
+    @image ||= { chartType: 'point_distribution',
+                 titleText: 'Distribution of points among users',
+                 data: { data: @user_points.values, series: @user_points.keys } }
   end
 
   def self.credentials
@@ -53,21 +46,19 @@ class ProjectMetricStoryOverall
 
   private
 
-  def project
-    JSON.parse(
-        @conn.get("projects/#{@project}").body
-    )
-  end
-
   def stories
-    JSON.parse(
-        @conn.get("projects/#{@project}/stories").body
-    )
+    JSON.parse(@conn.get("projects/#{@project}/stories").body)
   end
 
-  def transitions(story_id)
-    JSON.parse(
-        @conn.get("projects/#{@project}/stories/#{story_id}/transitions").body
-    )
+  def synthesize
+    @user_points = Hash.new(0)
+    @raw_data ||= stories
+    @raw_data.each do |story|
+      story['owner_ids'].each do |owner|
+        estimate = story['estimate'] ? story['estimate'] : 0
+        @user_points[owner] += estimate
+      end
+    end
   end
+
 end
