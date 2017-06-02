@@ -16,8 +16,8 @@ class ProjectMetricStoryOverall
   end
 
   def refresh
-    @raw_data ||= stories
     @image = @score = nil
+    @raw_data ||= stories
   end
 
   def raw_data=(new)
@@ -37,7 +37,7 @@ class ProjectMetricStoryOverall
     synthesize
     @image ||= { chartType: 'point_distribution',
                  titleText: 'Distribution of points among users',
-                 data: { data: @user_points.values, series: @user_points.keys } }
+                 data: { data: @user_points.values, series: @user_points.keys } }.to_json
   end
 
   def self.credentials
