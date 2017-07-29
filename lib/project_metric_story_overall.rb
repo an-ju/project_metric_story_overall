@@ -6,6 +6,7 @@ require "time"
 class ProjectMetricStoryOverall
   attr_reader :raw_data
 
+  STORY_STATES = %I[unscheduled unstarted started finished delivered rejected accepted]
   def initialize(credentials, raw_data = nil)
     @project = credentials[:tracker_project]
     @conn = Faraday.new(url: 'https://www.pivotaltracker.com/services/v5')
@@ -29,15 +30,18 @@ class ProjectMetricStoryOverall
   def score
     @raw_data ||= stories
     synthesize
-    @score ||= @user_points.values.inject { |s, e| s + e } / @user_points.length.to_f
+    @score ||= undelivered_stories > 0 ? ongoing_stories.to_f / undelivered_stories.to_f : 0
   end
 
   def image
     @raw_data ||= stories
     synthesize
-    @image ||= { chartType: 'point_distribution',
+    @image ||= { chartType: 'point_distribution_v2',
                  titleText: 'Distribution of points among users',
-                 data: { data: @user_points.values, series: @user_points.keys } }.to_json
+                 data: {
+                   data: STORY_STATES.map { |state| @story_status[state] },
+                   series: STORY_STATES
+                 } }.to_json
   end
 
   def self.credentials
@@ -51,14 +55,19 @@ class ProjectMetricStoryOverall
   end
 
   def synthesize
-    @user_points = Hash.new(0)
     @raw_data ||= stories
-    @raw_data.each do |story|
-      story['owner_ids'].each do |owner|
-        estimate = story['estimate'] ? story['estimate'] : 0
-        @user_points[owner] += estimate
-      end
+    @story_status = @raw_data.inject(Hash.new(0)) do |sum, story|
+      sum[story['current_state'].to_sym] += 1
+      sum
     end
+  end
+
+  def ongoing_stories
+    %I[started delivered].inject(0) { |sum, state| sum + @story_status[state] }
+  end
+
+  def undelivered_stories
+    %I[unscheduled unstarted started delivered].inject(0) { |sum, state| sum + @story_status[state] }
   end
 
 end
