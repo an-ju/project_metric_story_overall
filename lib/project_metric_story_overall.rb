@@ -36,8 +36,8 @@ class ProjectMetricStoryOverall
   def image
     @raw_data ||= stories
     synthesize
-    @image ||= { chartType: 'point_distribution_v2',
-                 titleText: 'Distribution of points among users',
+    @image ||= { chartType: 'story_overall_v2',
+                 titleText: 'Status of Stories',
                  data: {
                    data: STORY_STATES.map { |state| @story_status[state] },
                    series: STORY_STATES
