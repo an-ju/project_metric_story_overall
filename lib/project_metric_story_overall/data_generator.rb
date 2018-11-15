@@ -8,8 +8,8 @@ class ProjectMetricStoryOverall
       image: {
           chartType: 'story_overall',
           data: {
-              story_issues: Array(good) { s_good } + Array(bad) { s_bad },
-              overall_issues: Array(overall) { overall_issue }
+              story_issues: Array.new(good) { s_good } + Array.new(bad) { s_bad },
+              overall_issues: Array.new(overall) { overall_issue }
           }
       }.to_json }
   end
