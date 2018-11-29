@@ -75,6 +75,9 @@ class ProjectMetricStoryOverall
     duplicate_stories(slist).each do |s1, s2|
       issues.push(issue: "Possible duplicated stories: #{s1['id']}(#{s1['name']}) | #{s2['id']}(#{s2['name']})", severity: 2)
     end
+    skipped_stories(slist).each do |s|
+      issues.push(issue: "Backlog inverse: story #{s['id']}(#{s['name']}) is skipped.", severity: 2)
+    end
     issues
   end
 
@@ -96,6 +99,22 @@ class ProjectMetricStoryOverall
       end
     end
     duplicate_list
+  end
+
+  def skipped_stories(slist)
+    skipped_list = []
+    can_start = true
+    slist.each do |story|
+      if %w[unstarted planned].include? story['current_state']
+        skipped_list.push story
+        can_start = false
+      else
+        next if can_start
+
+        return skipped_list
+      end
+    end
+    []
   end
 
   def similarity(bow_a, bow_b)

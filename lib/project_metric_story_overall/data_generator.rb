@@ -1,6 +1,6 @@
 class ProjectMetricStoryOverall
   def self.fake_data
-    [fake_metric(0, 5, 2), fake_metric(2, 3, 1), fake_metric(3, 0, 0)]
+    [fake_metric(0, 5, 4), fake_metric(2, 3, 6), fake_metric(3, 0, 0)]
   end
 
   def self.fake_metric(good, bad, overall)
@@ -9,7 +9,7 @@ class ProjectMetricStoryOverall
           chartType: 'story_overall',
           data: {
               story_issues: Array.new(good) { s_good } + Array.new(bad) { s_bad },
-              overall_issues: Array.new(overall) { overall_issue }
+              overall_issues: Array.new(overall/2) { duplicate_issue } + Array.new(overall/2) { backlog_inverse_issue }
           }
       }.to_json }
   end
@@ -87,9 +87,16 @@ class ProjectMetricStoryOverall
     }
   end
 
-  def self.overall_issue
+  def self.duplicate_issue
     {
         "issue": "Possible duplicated stories: 123456(this is a test) | 234567(this is another test)",
+        "severity": 2
+    }
+  end
+
+  def self.backlog_inverse_issue
+    {
+        "issue": "Backlog inverse: story 123456(this is a test) is skipped.",
         "severity": 2
     }
   end
