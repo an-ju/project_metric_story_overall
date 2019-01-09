@@ -11,7 +11,7 @@ class ProjectMetricStoryOverall
               story_issues: Array.new(good) { s_good } + Array.new(bad) { s_bad },
               overall_issues: Array.new(overall/2) { duplicate_issue } + Array.new(overall/2) { backlog_inverse_issue }
           }
-      }.to_json }
+      }}
   end
 
   def self.s_bad

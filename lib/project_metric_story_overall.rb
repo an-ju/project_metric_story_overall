@@ -3,8 +3,12 @@ require 'project_metric_story_overall/data_generator'
 require "faraday"
 require "json"
 require "time"
+require 'project_metric_base'
 
 class ProjectMetricStoryOverall
+  include ProjectMetricBase
+  add_credentials %I[tracker_project tracker_token]
+  add_raw_data %w[tracker_stories tracker_memberships]
 
   def initialize(credentials, raw_data = nil)
     @project = credentials[:tracker_project]
@@ -12,48 +16,32 @@ class ProjectMetricStoryOverall
     @conn.headers['Content-Type'] = 'application/json'
     @conn.headers['X-TrackerToken'] = credentials[:tracker_token]
 
-    self.raw_data = raw_data if raw_data
-  end
-
-  def refresh
-    set_stories
-    set_memberships
-    @raw_data = { stories: @stories, memberships: @memberships }.to_json
-    analyze_issues
-  end
-
-  def raw_data=(raw_data)
-    @raw_data = raw_data
-    raw_data_dict = JSON.parse(raw_data, symbolize_names: true)
-    @stories = raw_data_dict[:stories]
-    @memberships = raw_data_dict[:memberships]
+    complete_with raw_data
     analyze_issues
   end
 
   def score
-    refresh unless @raw_data
     @issues.inject(0) { |sum, s| sum + s[:m_severity] } + @overall_issues.inject(0) { |sum, s| sum + s[:severity] }
   end
 
   def image
-    refresh unless @raw_data
-    @image ||= { chartType: 'story_overall',
-                 data: { story_issues: @issues,
-                         overall_issues: @overall_issues }}.to_json
+    { chartType: 'story_overall',
+      data: { story_issues: @issues,
+              overall_issues: @overall_issues }}
   end
 
-  def self.credentials
-    %I[tracker_project tracker_token]
+  def obj_id
+    nil
   end
 
   private
 
-  def set_stories
-    @stories = JSON.parse(@conn.get("projects/#{@project}/stories").body)
+  def tracker_stories
+    @tracker_stories = JSON.parse(@conn.get("projects/#{@project}/stories").body)
   end
 
-  def set_memberships
-    @memberships = JSON.parse(@conn.get("projects/#{@project}/memberships").body)
+  def tracker_memberships
+    @tracker_memberships = JSON.parse(@conn.get("projects/#{@project}/memberships").body)
   end
 
   def analyze_issues
@@ -67,7 +55,7 @@ class ProjectMetricStoryOverall
   end
 
   def backlog_stories
-    @stories.select { |s| %w[unstarted planned started finished delivered].include? s['current_state'] }
+    @tracker_stories.select { |s| %w[unstarted planned started finished delivered].include? s['current_state'] }
   end
 
   def stories_issues(slist)

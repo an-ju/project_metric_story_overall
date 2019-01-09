@@ -10,13 +10,13 @@ RSpec.describe ProjectMetricStoryOverall do
   context 'image and score' do
     subject(:metric) do
       credentials = {tracker_project: '2154341', tracker_token: 'test token'}
-      raw_data = File.read 'spec/data/stories_memberships.json'
+      raw_data = JSON.parse(File.read('spec/data/stories_memberships.json'))
       described_class.new credentials, raw_data
     end
 
     it 'should restore raw data' do
-      expect(metric.instance_variable_get(:@stories)).not_to be_nil
-      expect(metric.instance_variable_get(:@memberships)).not_to be_nil
+      expect(metric.instance_variable_get(:@tracker_stories)).not_to be_nil
+      expect(metric.instance_variable_get(:@tracker_memberships)).not_to be_nil
     end
 
     it 'should set score correctly' do
@@ -24,13 +24,13 @@ RSpec.describe ProjectMetricStoryOverall do
     end
 
     it 'should set image correctly' do
-      expect(JSON.parse(metric.image)).to have_key('data')
+      expect(metric.image).to be_a(Hash)
     end
 
     it 'should contain the right image content' do
-      image = JSON.parse(metric.image)
-      expect(image['data']['story_issues']).not_to be_nil
-      expect(image['data']['overall_issues']).not_to be_nil
+      image = metric.image
+      expect(image[:data][:story_issues]).not_to be_nil
+      expect(image[:data][:overall_issues]).not_to be_nil
     end
 
   end
@@ -39,7 +39,7 @@ RSpec.describe ProjectMetricStoryOverall do
   context 'stories metric' do
     subject(:metric) do
       credentials = {tracker_project: '2154341', tracker_token: 'test token'}
-      raw_data = File.read 'spec/data/stories_memberships.json'
+      raw_data = JSON.parse(File.read('spec/data/stories_memberships.json'))
       described_class.new credentials, raw_data
     end
 
@@ -85,9 +85,9 @@ RSpec.describe ProjectMetricStoryOverall do
     end
 
     it 'should set image data correctly' do
-      image = JSON.parse(described_class.fake_data.first[:image])
-      expect(image['data']['story_issues']).not_to be_nil
-      expect(image['data']['overall_issues']).not_to be_nil
+      image = described_class.fake_data.first[:image]
+      expect(image[:data][:story_issues]).not_to be_nil
+      expect(image[:data][:overall_issues]).not_to be_nil
     end
   end
 end
