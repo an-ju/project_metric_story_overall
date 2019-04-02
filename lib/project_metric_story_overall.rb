@@ -70,6 +70,7 @@ class ProjectMetricStoryOverall
     issues = []
     issues.push(issue: 'Story does not have an estimate.', severity: 3) if not_assigned?(s)
     issues.push(issue: 'Story description is short.', severity: 1) if short_description(s)
+    issues.push(issue: 'Story is too large (story has a large point).', severity: 2) if large_story?(s)
     issues
   end
 
@@ -100,6 +101,10 @@ class ProjectMetricStoryOverall
 
   def not_labelled(s)
     s['labels'].empty?
+  end
+
+  def large_story?(s)
+    !s['estimate'].nil? && s['estimate'] > 5
   end
 
   def short_description(s)
