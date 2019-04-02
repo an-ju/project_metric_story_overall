@@ -63,18 +63,6 @@ RSpec.describe ProjectMetricStoryOverall do
       expect(metric.send(:duplicate_stories, [s1, s2, s3])).to eql([[s1, s3]])
     end
 
-    it 'should capture skipped stories' do
-      s1 = double('s1')
-      allow(s1).to receive(:[]).and_return('started')
-      s2 = double('s2')
-      allow(s2).to receive(:[]).and_return('unstarted')
-      s3 = double('s3')
-      allow(s3).to receive(:[]).and_return('started')
-      s4 = double('s4')
-      allow(s4).to receive(:[]).and_return('unstarted')
-
-      expect(metric.send(:skipped_stories, [s1, s2, s3, s4])).to eql([s2])
-    end
   end
 
   context 'data generator' do
